@@ -18,17 +18,54 @@ object Self_made extends App {
       complete(StatusCodes.OK)
     }
 
-  val complexerRoute : Route =
+  val WithExplicitVerb : Route =
+    path("home") {
+      post {
+        complete(StatusCodes.OK)
+      }
+    }
+
+  val WithDoubleSlash : Route =
+    path("home" / "something") {
+      post {
+        complete(StatusCodes.OK)
+      }
+    }
+
+  val WithHtml : Route =
     path("somewhere" / "else") {
-      complete(HttpEntity(
-        ContentTypes.`text/html(UTF-8)`,
-        """
-          |<h1>Hello world</h1>
-          |""".stripMargin
-      ))
+      get {
+        complete(HttpEntity(
+          ContentTypes.`text/html(UTF-8)`,
+          """
+            |<h1>Hello world</h1>
+            |""".stripMargin
+        ))
+      }
+    }
+
+  val SeveralRouter : Route =
+    path("somewhere" / "else") {
+      get {
+        complete(HttpEntity(
+          ContentTypes.`text/html(UTF-8)`,
+          """
+            |<h1>Hello world</h1>
+            |""".stripMargin
+        ))
+      }
+    } ~ path("second" / "route") {
+      get {
+        complete(HttpEntity(
+          ContentTypes.`text/html(UTF-8)`,
+          """
+            |<h2>I am a another path</h2>
+            |""".stripMargin
+        ))
+      }
     }
 
 
-  Http().newServerAt("localHost", 8080).bindFlow(complexerRoute)
+  Http().newServerAt("localHost", 8080).bindFlow(SeveralRouter)
 }
 
