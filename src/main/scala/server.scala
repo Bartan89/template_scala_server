@@ -95,7 +95,7 @@ object Self_made extends App {
   val readQueryParam =
     path("your") {
       get {
-        parameter("name") { name =>
+        parameter("name".as[String]) { (name : String) =>
           complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,
             s"""
                | <h2>your name is: $name</h2>
@@ -105,7 +105,12 @@ object Self_made extends App {
       }
 
 
-  val bindingFuture = Http().newServerAt("localhost", 8080).bind(readQueryParam)
+  val compactNotation = (path("compact") & get) {
+    complete("hello world")
+  }
+
+
+  val bindingFuture = Http().newServerAt("localhost", 8080).bind(compactNotation)
 
   println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
   StdIn.readLine() // let it run until user presses return
