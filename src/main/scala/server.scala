@@ -110,7 +110,13 @@ object Self_made extends App {
   }
 
 
-  val bindingFuture = Http().newServerAt("localhost", 8080).bind(compactNotation)
+  val returnText : String = "hello world"
+
+  val dryNotationPaths = (path("bart") | path("kuijper")) { complete(returnText) }
+
+
+
+  val bindingFuture = Http().newServerAt("localhost", 8080).bind(dryNotationPaths)
 
   println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
   StdIn.readLine() // let it run until user presses return
