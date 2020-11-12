@@ -11,8 +11,6 @@ object Self_made extends App {
 
   implicit val system = ActorSystem("HighLevelIntro")
 
-
-
   val simpleRoute : Route =
     path("home") {
       complete(StatusCodes.OK)
@@ -44,7 +42,7 @@ object Self_made extends App {
       }
     }
 
-  val SeveralRouter : Route =
+  val doubleRoutes : Route =
     path("somewhere" / "else") {
       get {
         complete(HttpEntity(
@@ -65,7 +63,18 @@ object Self_made extends App {
       }
     }
 
+  val withParam : Route =
+    path("yourage" / IntNumber) {(age : Int) =>
+      get {
+        println("can I print here? yes")
+        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,
+          s"""
+            | <h2>you are $age years old</h2>
+            |""".stripMargin))
+      }
+    }
 
-  Http().newServerAt("localHost", 8080).bindFlow(SeveralRouter)
+
+  Http().newServerAt("localHost", 8080).bindFlow(withParam)
 }
 
