@@ -6,8 +6,6 @@ import akka.http.scaladsl.server.Route
 
 object routes_kinda {
 
-
-
   val simpleRoute: Route =
     path("home") {
       complete(StatusCodes.OK)
