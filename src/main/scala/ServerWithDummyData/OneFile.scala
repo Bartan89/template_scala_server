@@ -3,7 +3,6 @@ import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 import akka.util.Timeout
 import spray.json._
@@ -13,76 +12,71 @@ import scala.concurrent.duration.DurationInt
 import scala.io.StdIn
 
 
-case class Player (nickname : String, characterClass : String, level : Int)
+case class Patient (id: Int, patient : String, age : Int, disease : String)
 
-object GameAreaMap {
-  case object GetAllPlayers
-  case class GetPlayer(nickname: String)
-  case class GetPlayersByClass(characterClass : String)
-  case class AddPlayer(player : Player)
-  case class RemovePlayer(player: Player)
+object HospitalImaginary {
+  case object GetAllPatients
+  case class GetPatient(id: Int)
+  case class GetPatientsByCovid(disease : String)
+  case class AddPatient(patient : Patient)
+  case class RemovePlayer(patient: Patient)
   case object OperationSuccess
 }
 
-class GameAreaMap extends Actor with ActorLogging {
-  import GameAreaMap._
-  var players = Map[String, Player]()
+class HospitalImaginary extends Actor with ActorLogging {
+  import HospitalImaginary._
+  var patients = Map[Int, Patient]()
 
   override def receive: Receive = {
-    case GetAllPlayers =>
-      log.info("Getting all players")
-      sender() ! players.values.toList
-    case GetPlayer(nickname) =>
-      log.info(s"getting player with nickname $nickname")
-      sender() ! players.get(nickname)
-    case GetPlayersByClass(characterClass) =>
-      log.info(s"Getting all players with the character class: $characterClass")
-      sender() ! players.values.toList.filter(_.characterClass == characterClass)
-    case AddPlayer(player) =>
-      log.info(s"trying to add player $player")
-      players = players + (player.nickname -> player)
+    case GetAllPatients =>
+      log.info("Getting all patients")
+      sender() ! patients.values.toList
+    case GetPatient(id) =>
+      log.info(s"getting patient with id $id")
+      sender() ! patients.get(id)
+    case GetPatientsByCovid(disease) =>
+      log.info(s"Getting patient with $disease")
+      sender() ! patients.values.toList.filter(_.disease == disease)
+    case AddPatient(patient) =>
+      log.info(s"trying to add player $patient")
+      patients = patients + (patient.id -> patient)
       sender() ! OperationSuccess
-    case RemovePlayer(player) =>
-      log.info(s"trying to remove $player")
-      players = players - player.nickname
+    case RemovePlayer(patient) =>
+      log.info(s"trying to remove $patient")
+      patients = patients - patient.id
       sender() ! OperationSuccess
     }
 }
 
-trait PlayerJsonProtocol extends DefaultJsonProtocol {
-  implicit val playerFormat = jsonFormat3(Player)
+trait PatientJsonProtocol extends DefaultJsonProtocol {
+  implicit val patientFormat = jsonFormat4(Patient)
 }
 
-object OneFile extends App with PlayerJsonProtocol with SprayJsonSupport {
+object OneFile extends App with PatientJsonProtocol with SprayJsonSupport {
 
 
   implicit val system = ActorSystem("ServerWithDummyData")
-  import GameAreaMap._
+  import HospitalImaginary._
 
-  val rtjvmGameMap = system.actorOf(Props[GameAreaMap], "rockTheJVMAreaMap")
+  val hospital = system.actorOf(Props[HospitalImaginary], "hospital")
   val playerList = List(
-    Player("JumboJetter", "warrior", 80),
-    Player("DarbDom", "magician", 60),
-    Player("DunkinDanny", "warrior", 80)
+    Patient(1, "Marie",  31, "diabetes" ),
+    Patient(2, "Frits",  73, "cancer" ),
+    Patient(3, "Erik",  65, "diabetes" )
   )
 
-  playerList.foreach { player =>
-    rtjvmGameMap ! AddPlayer(player)
+  playerList.foreach { patient =>
+    hospital ! AddPatient(patient)
   }
-
-  val simpleRoute: Route =
-    path("home") {
-      complete("hello world")
-    }
 
 
   implicit val timeout = Timeout(2 seconds)
   val routesForGame =
     pathPrefix("api" / "player") {
       get {
-        path("class" / Segment) { characterClass =>
-          val playersByClassFuture = (rtjvmGameMap ? GetPlayersByClass(characterClass)).mapTo[List[Player]]
-          complete(playersByClassFuture)
+        path("class" / Segment) { disease =>
+          val patientByCovid = (hospital ? GetPatientsByCovid(disease)).mapTo[List[Patient]]
+          complete(patientByCovid)
         }
       }
     }
