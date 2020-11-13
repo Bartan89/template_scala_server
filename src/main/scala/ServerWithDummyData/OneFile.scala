@@ -72,9 +72,9 @@ object OneFile extends App with PatientJsonProtocol with SprayJsonSupport {
 
   implicit val timeout = Timeout(2 seconds)
   val routesForGame =
-    pathPrefix("api" / "player") {
+    pathPrefix("api" / "patients") {
       get {
-        path("class" / Segment) { disease =>
+        path("disease" / Segment) { disease =>
           val patientByCovid = (hospital ? GetPatientsByCovid(disease)).mapTo[List[Patient]]
           complete(patientByCovid)
         }
