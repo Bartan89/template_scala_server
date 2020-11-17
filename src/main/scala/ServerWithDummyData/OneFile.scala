@@ -8,6 +8,7 @@ import akka.util.Timeout
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.io.StdIn
 
@@ -22,6 +23,7 @@ object HospitalImaginary {
   case class RemovePlayer(patient: Patient)
   case object OperationSuccess
 }
+
 
 class HospitalImaginary extends Actor with ActorLogging {
   import HospitalImaginary._
@@ -70,22 +72,28 @@ object OneFile extends App with PatientJsonProtocol with SprayJsonSupport {
   }
 
 
-  implicit val timeout = Timeout(2 seconds)
+  //http localhost:8080/api/patients/disease/diabetes
+
+  implicit val timeout = Timeout(1 seconds)
+
   val routesForGame =
-    pathPrefix("api" / "patients") {
+    pathPrefix("api"./("patients")) {
       get {
         path("disease" / Segment) { disease =>
           val patientByCovid = (hospital ? GetPatientsByCovid(disease)).mapTo[List[Patient]]
+          val oldPatients = patientByCovid.map(_.map(_.copy(age = 100)))
+          //timeout 2 second
+          println("iets" + patientByCovid)
+          val firstPatient : Future[Patient] = patientByCovid.map( x => x.head)
+          val olderFirstPatient = firstPatient.map(_.copy(age = 100))
+          println(firstPatient)
+          println(olderFirstPatient)
           complete(patientByCovid)
         }
       }
     }
 
-
   val bindingFuture = Http().newServerAt("localhost", 8080).bind(routesForGame)
-
-
-
 
   println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
   StdIn.readLine() // let it run until user presses return
